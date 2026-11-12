@@ -61,7 +61,7 @@ or with **Re-measure baseline**.
 ## Demo flow
 
 The step-by-step flow for the talk (timings, what to press, what the audience sees) is in the
-[main README](../README.md#live-demo).
+[main README](../README.md#現場-demo).
 
 ## Limits
 
