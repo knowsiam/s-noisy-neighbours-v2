@@ -98,7 +98,7 @@ python3 analysis/plot.py results/<標籤>-<日期>     # 替新的結果畫同�
 baseline 漂移，以及兩台機器相差超過 baseline 0.10 的所有設定。絕對值本來就會不同；重點是每個結論的
 *相對*趨勢是否還成立。
 
-## 專題狀態（2026-11-12）
+## 專題狀態（2026-11-14）
 
 | 項目 | 狀態 | 說明 |
 |---|---|---|
@@ -107,25 +107,29 @@ baseline 漂移，以及兩台機器相差超過 baseline 0.10 的所有設定�
 | 巢狀 Proxmox 上的 pilot 矩陣 | ✅ 完成（10/19） | 198 組設定、無缺值，見 `results/nested-2026-10-19/` |
 | Pilot 分析與圖 | ✅ 完成 | `analysis/`，結論見下方 |
 | 現場 demo | ✅ 已在巢狀主機上跑過（11/14） | `demo/`，截圖在 `demo/screenshots/` |
-| 第二台機器的量測 | ⏳ 已準備，尚未執行 | 在另一台主機跑同樣的矩陣，再用 `analysis/compare.py` 比較；報告等級的數據和「VM 與容器的磁碟比較」仍需要裸機 |
-| n = 1、p95 指標、5 次重複 | ❌ | 沒有這些，n* 只能給出上界（「< 2」），無法內插 |
+| 巢狀 v2 量測（5 次重複，n = 1、2、4、8） | ✅ 完成（11/13） | 420 組設定、0 缺值，見 `results/nested-v2-2026-11-13/`（含 `REPORT.md`、與 pilot 比較的 `compare.md`）；和 pilot 同一台主機 |
+| n = 1、5 次重複 | ✅ | 在 v2 中；n* 改用內插，並附最小–最大區間 |
+| 裸機 Proxmox 量測 | ❌ 尚未開始 | 報告等級的數據和「VM 與容器的磁碟比較」都需要裸機 |
+| p95 指標 | ❌ | 腳本只記錄 p99；n* 以 p99 定義 |
 | 節流（`cpu.stat`）、`io.stat`、VM steal time | ❌ 未記錄 | 提案要回答每個掉速是由節流、壓力還是 steal 造成 |
-| cgroup 階層假說（結論 2） | ❌ 未驗證 | `cat /sys/fs/cgroup/{qemu.slice,lxc}/cpu.weight` 加一次對照實驗 |
+| cgroup 階層假說（結論 2） | ⚠️ 已檢查前提 | 所有 `cpu.weight` 都是 100（`qemu.slice`、`lxc`、各容器、VM 的 scope）；仍需一次對照實驗 |
 | 與 Sharma 等人（2016）的對照表 | ❌ | |
 | 期末報告（15 頁，12/29） | ❌ 未開始 | |
 
 和提案不同的地方（要在報告中說明）：guest 用 Debian 而不是 Ubuntu、磁碟 16 GB 而不是 20 GB、兩個受測
 guest 一次只跑一個、pilot 用 p99 而不是 p95、n ∈ {0, 2, 4, 8} 且 3 次重複（原訂 n ∈ {0, 1, 2, 4, 8}、
-5 次），另外新增了三種 CPU 擺放 policy 和記憶體頻寬的壓力測試。
+5 次；v2 已改成這個設定），另外新增了三種 CPU 擺放 policy 和記憶體頻寬的壓力測試。
 
 ## Repo 結構
 
 ```
 osproj.sh                      實驗腳本，這裡所有結果都由它產生（bash，在 Proxmox 主機上執行）
 results/nested-2026-10-19/     raw.csv（長格式）、summary.csv、placement.tsv（CPU 擺放紀錄）、meta.txt（平台與 guest 設定）
+results/nested-v2-2026-11-13/  v2 量測（5 次重複，n = 1, 2, 4, 8）：同上，加上圖、REPORT.md、report_stats.md、compare.md
 results/<標籤>-<日期>/         其他機器的結果，由 `osproj.sh export` 寫出（多一份 platform.txt）
 analysis/                      load.py + plot.py -> fig1_cpu.png、fig2_mem_io.png、fig3_psi.png
                                compare.py -> 兩組結果的並列比較（只用標準函式庫）
+                               report_stats.py -> REPORT.md 用到的統計（重疊、PSI 相關、n* 區間；需要 pandas、scipy）
 tools/                         switch-hypervisor.bat：開關 Windows hypervisor（WSL 2 與 VMware 裡的巢狀 Proxmox 二選一）
 demo/                          現場 demo：可控制鄰居數、壓力種類、policy 的網頁（見 demo/README.md）
 tooling/os-isolation/          另一套 Python 實驗框架（隨機區組、1 Hz 取樣器、報告產生器）；
@@ -214,11 +218,10 @@ demo 現場展示 pilot 的主要結論：在 Proxmox 預設設定下，忙碌�
 
 ## 剩下的工作（依順序）
 
-1. 擴充 `osproj.sh`：加入 n = 1、在 p99 之外同時記錄 p95、每次量測讀取 `cpu.stat`（節流）、`io.stat`
+1. 擴充 `osproj.sh`：在 p99 之外同時記錄 p95、每次量測讀取 `cpu.stat`（節流）、`io.stat`
    和 VM 的 steal time。
 2. 驗證 cgroup 階層假說（結論 2）。
-3. 在第二台機器上重跑未修改的矩陣並比較（`analysis/compare.py`）；之後在裸機的 Proxmox 主機上以更多
-   重複次數重跑（至少 `default` policy）。
+3. 在裸機的 Proxmox 主機上重跑矩陣（至少 `default` policy），用 `analysis/compare.py` 和巢狀結果比較。
 4. 分析：掉速曲線、帶區間的 n*、歸因、VM 與容器的檢定、和 Sharma 等人（2016）的比較。
 5. 期末報告（15 頁），寫明每位成員的分工。
 

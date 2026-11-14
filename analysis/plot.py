@@ -9,8 +9,8 @@ from matplotlib.ticker import FixedLocator, FuncFormatter, NullLocator
 plt.rcParams.update({'font.size':10,'axes.spines.top':False,'axes.spines.right':False,'axes.edgecolor':'#8a8984','axes.labelcolor':'#52514e','xtick.color':'#52514e','ytick.color':'#52514e'})
 C={'vm':'#2a78d6','ct':'#eb6834'}; M={'vm':'o','ct':'s'}; LAB={'vm':'KVM VM','ct':'LXC CT'}
 POL=[('default','default (Proxmox defaults)'),('float','float (cpulimit, no cpuset)'),('dedicated','dedicated (disjoint cpusets)')]
-NS=[0,2,4,8]
 L=w[~w.stress.isin(['post'])].copy()
+NS=sorted({0,*L.n.astype(int).unique()})   # neighbour counts present in the data (was hard-coded [0,2,4,8])
 def series(pol,v,stress,col):
     rows=[]
     for n in NS:
