@@ -106,7 +106,7 @@ baseline 漂移，以及兩台機器相差超過 baseline 0.10 的所有設定�
 | 實驗腳本（`osproj.sh`） | ✅ 完成 | 建立 guest、可中斷續跑的矩陣、只操作自己的 VMID |
 | 巢狀 Proxmox 上的 pilot 矩陣 | ✅ 完成（10/19） | 198 組設定、無缺值，見 `results/nested-2026-10-19/` |
 | Pilot 分析與圖 | ✅ 完成 | `analysis/`，結論見下方 |
-| 現場 demo | ✅ 已做好，⚠️ 尚未在主機上排練 | `demo/`，只在模擬模式測試過 |
+| 現場 demo | ✅ 已在巢狀主機上跑過（11/14） | `demo/`，截圖在 `demo/screenshots/` |
 | 第二台機器的量測 | ⏳ 已準備，尚未執行 | 在另一台主機跑同樣的矩陣，再用 `analysis/compare.py` 比較；報告等級的數據和「VM 與容器的磁碟比較」仍需要裸機 |
 | n = 1、p95 指標、5 次重複 | ❌ | 沒有這些，n* 只能給出上界（「< 2」），無法內插 |
 | 節流（`cpu.stat`）、`io.stat`、VM steal time | ❌ 未記錄 | 提案要回答每個掉速是由節流、壓力還是 steal 造成 |
@@ -156,7 +156,9 @@ tooling/os-isolation/          另一套 Python 實驗框架（隨機區組、1 
 demo 現場展示 pilot 的主要結論：在 Proxmox 預設設定下，忙碌的鄰居一落到容器的 CPU 上，容器就明顯
 變慢，VM 幾乎不受影響；明確指定 CPU 之後，這個差距就消失。完整說明見 [demo/README.md](demo/README.md)。
 
-![demo 網頁（模擬資料）](demo/screenshot-simulated.png)
+![demo 網頁（巢狀主機實測，default，n = 8）](demo/screenshots/05-default-n8.png)
+
+10 張實測截圖（default／dedicated／float，n = 0–8）和對應數字見 [demo/README.md](demo/README.md#screenshots-from-the-host)。
 
 **簡報時的配置。** 跑 VMware + Proxmox 的桌機透過 Chrome 遠端桌面操作。demo 網頁是在*那台桌機上*的
 瀏覽器開啟（VMware 的 NAT 網路只有那台機器連得到），所以觀眾看到的是遠端桌面的畫面。Proxmox 主機上
